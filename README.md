@@ -19,8 +19,8 @@ B
 	
 Usage:
 
-- Click with the left mouse button on any cell to spawn an cell of species A
-- Click with the right mouse button on any cell to spawn an cell of species B
+- Click with the left mouse button on any cell to spawn an automaton of species A
+- Click with the right mouse button on any cell to spawn an automaton of species B
 - Click with the middle mouse button on any cell to clear it
 
 Run - Iterates over the grid each second using the rules described above
