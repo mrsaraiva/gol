@@ -14,6 +14,8 @@ local isRunning = false
 local lastObject
 local pauseButton
 local runButton
+local runSpeed = 16.67
+local speedSlider
 local stepButton
 local totalBirth = 0
 local totalBirthText
@@ -40,6 +42,7 @@ local pauseGOL
 local printGrid
 local printTable
 local runGOL
+local setSpeed
 local stepGOL
 local spawnPiece
 local updateCounters
@@ -84,13 +87,13 @@ getNeigh = function(xPos, yPos)
 	local neigh = {}
 	neigh.qtyNeighA = 0
 	neigh.qtyNeighB = 0 
-	print("getNeigh xPos: " .. xPos)
-	print("getNeigh yPos: " .. yPos)
+	--print("getNeigh xPos: " .. xPos)
+	--print("getNeigh yPos: " .. yPos)
 	for i = xPos - 1, xPos + 1 do
 		for j = yPos - 1, yPos + 1 do
 			if((i >= 1 and i <= GRID_WIDTH) and (j >= 1 and j <= GRID_HEIGHT)) then
 				if(i ~= xPos or j ~= yPos) then
-					print(i .. "," .. j)
+					--print(i .. "," .. j)
 					local neighPiece = cell[i][j]
 					if(neighPiece ~= nil) then
 						if(neighPiece.type == "red") then
@@ -227,8 +230,21 @@ end
 
 runGOL = function()
 	if (not isRunning) then
-		golTimer = timer.performWithDelay(1000, gol, -1)
+		golTimer = timer.performWithDelay(runSpeed, gol, -1)
 		isRunning = true
+	end
+end
+
+setSpeed = function( event )
+	local value = 1000 - (event.value * 10)
+	if (value <= 10) then
+		value = 16.67
+	end
+	runSpeed = value
+	if (isRunning) then
+		printTable(golTimer)
+		golTimer._delay = runSpeed
+		printTable(golTimer)
 	end
 end
 
@@ -285,7 +301,16 @@ gol = function()
 	for i = 1, GRID_HEIGHT do
 		for j = 1, GRID_WIDTH do
 			piece = cell[i][j]
-			if (piece ~= nil) then
+			if (piece == nil) then
+				local neigh = getNeigh(i, j)
+				print("Blank piece[" .. i .. "][" .. j .. "] " .. "qtyNeighA: ".. neigh.qtyNeighA)
+				print("Blank piece[" .. i .. "][" .. j .. "] " .. "qtyNeighB: ".. neigh.qtyNeighB)
+				if (neigh.qtyNeighA == 3) then
+					cell[i][j] = spawnPiece(i, j, "red", "auto")
+				elseif (neigh.qtyNeighB == 4) then
+					cell[i][j] = spawnPiece(i, j, "white", "auto")
+				end
+			else
 				local neigh = getNeigh(i, j)
 				if (piece.type == "red") then
 					local numNeigh = neigh.qtyNeighA
@@ -341,15 +366,6 @@ gol = function()
 						print("Piece cleared")
 					end
 				end
-			else
-				local neigh = getNeigh(i, j)
-				print("Blank piece[" .. i .. "][" .. j .. "] " .. "qtyNeighA: ".. neigh.qtyNeighA)
-				print("Blank piece[" .. i .. "][" .. j .. "] " .. "qtyNeighB: ".. neigh.qtyNeighB)
-				if (neigh.qtyNeighA == 3) then
-					cell[i][j] = spawnPiece(i, j, "red", "auto")
-				elseif (neigh.qtyNeighB == 4) then
-					cell[i][j] = spawnPiece(i, j, "white", "auto")
-				end
 			end
 		end
 	end
@@ -375,7 +391,7 @@ runButton = widget.newButton(
         fillColor = { default={ 0, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
         strokeColor = { default={ 0, 0, 0 }, over={ 0.4, 0.1, 0.2 } },
         strokeWidth = 0,
-		x = 43,
+		x = 28,
 		y = 20
     }
 )
@@ -393,7 +409,7 @@ pauseButton = widget.newButton(
         fillColor = { default={ 0, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
         strokeColor = { default={ 0, 0, 0 }, over={ 0.4, 0.1, 0.2 } },
         strokeWidth = 0,
-		x = 43,
+		x = 28,
 		y = 45
     }
 )
@@ -411,7 +427,7 @@ stepButton = widget.newButton(
         fillColor = { default={ 0, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
         strokeColor = { default={ 0, 0, 0 }, over={ 0.4, 0.1, 0.2 } },
         strokeWidth = 0,
-		x = 43,
+		x = 28,
 		y = 70
     }
 )
@@ -429,7 +445,7 @@ clearButton = widget.newButton(
         fillColor = { default={ 0, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
         strokeColor = { default={ 0, 0, 0 }, over={ 0.4, 0.1, 0.2 } },
         strokeWidth = 0,
-		x = 43,
+		x = 28,
 		y = 95
     }
 )
@@ -447,10 +463,23 @@ debugButton = widget.newButton(
         fillColor = { default={ 0, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
         strokeColor = { default={ 0, 0, 0 }, over={ 0.4, 0.1, 0.2 } },
         strokeWidth = 0,
-		x = 43,
+		x = 28,
 		y = 120
     }
 )
+
+speedSlider = widget.newSlider(
+    {
+		orientation = "vertical",
+        top = 150,
+        left = 8,
+        height = 100,
+        value = 100,
+        listener = setSpeed
+    }
+)
+
+speedSliderLabel = display.newText("Iteration Speed", 25, 285)
 
 -- Position Counters
 aliveAText = display.newText("Alive A: " .. aliveA, 430, 20, native.systemFont, 12)
